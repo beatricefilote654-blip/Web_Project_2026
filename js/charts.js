@@ -76,10 +76,10 @@ export function renderBar(containerId, data) {
     .call(d3.axisLeft(y).ticks(5).tickSize(-iW).tickFormat(''))
     .call(g => { g.select('.domain').remove(); g.selectAll('line').attr('stroke', '#e2e8f0'); });
 
-  // X axis — pas adaptiv: la ~14px per etichetă rotită, toate intră pe desktop
-  // (42 județe × 14 = 588px, iW ≥ 588 → toate; sub asta stride crește)
-  const minSpacing = 14;
-  const stride = Math.max(1, Math.ceil((data.length * minSpacing) / iW));
+  // X axis — pe desktop afișează toate etichetele; pe mobil aplică stride
+  const isDesktop = window.innerWidth >= 768;
+  const minSpacing = isDesktop ? 0 : 14;
+  const stride = isDesktop ? 1 : Math.max(1, Math.ceil((data.length * minSpacing) / iW));
   const tickValues = data.map(d => d.label).filter((_, i) => i % stride === 0);
 
   g.append('g').attr('transform', `translate(0,${iH})`)
@@ -153,9 +153,10 @@ export function renderLine(containerId, data) {
     .attr('fill', 'none').attr('stroke', COLORS[0]).attr('stroke-width', 2.5)
     .attr('d', line);
 
-  // X axis — pas adaptiv: fiecare etichetă are nevoie de ~38px ca să nu se suprapună
-  const minSpacing = 38;
-  const stride = Math.max(1, Math.ceil((data.length * minSpacing) / iW));
+  // X axis — pe desktop afișează toate etichetele; pe mobil aplică stride
+  const isDesktop = window.innerWidth >= 768;
+  const minSpacing = isDesktop ? 0 : 38;
+  const stride = isDesktop ? 1 : Math.max(1, Math.ceil((data.length * minSpacing) / iW));
   const tickValues = data.map(d => d.label).filter((_, i) => i % stride === 0);
 
   g.append('g').attr('transform', `translate(0,${iH})`)
