@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UnD – Vizualizator Date Șomaj România</title>
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+<header>
+  <div class="header-brand">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+      <rect width="28" height="28" rx="6" fill="rgba(255,255,255,.15)"/>
+      <path d="M6 20 L10 13 L14 16 L18 9 L22 12" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="22" cy="12" r="2" fill="#60a5fa"/>
+    </svg>
+    <h1>UnD <span>Unemployment Data Visualizer</span></h1>
+  </div>
+  <nav aria-label="Navigare principală">
+    <a href="index.html">Dashboard</a>
+    <a href="admin/">Administrare</a>
+    <a href="docs/README.html">Documentație</a>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ── Filters ──────────────────────────────────────────── -->
+  <section id="filters" aria-label="Filtre date">
+    <div class="filters-title">Filtre</div>
+    <div class="filters-row">
+
+      <!-- County multi-select dropdown -->
+      <div class="filter-group">
+        <label>Județe</label>
+        <div id="county-dropdown" class="county-dropdown">
+          <button type="button" class="county-trigger" id="county-trigger" aria-haspopup="listbox" aria-expanded="false">
+            <span id="county-summary">Toate județele</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+              <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div class="county-panel" id="county-panel" style="display:none" role="listbox">
+            <input type="text" id="county-search" placeholder="Caută județ…" autocomplete="off">
+            <div class="county-actions">
+              <button type="button" class="county-action-btn" id="county-all">Toate</button>
+              <button type="button" class="county-action-btn" id="county-none">Niciuna</button>
+            </div>
+            <div class="county-list" id="county-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Age groups (pill checkboxes) -->
+      <div class="filter-group">
+        <label>Grupă vârstă</label>
+        <div class="tag-group" id="fg-age" role="group" aria-label="Filtrare după vârstă">
+          <label class="tag-label"><input type="checkbox" value="15-24"><span>15–24</span></label>
+          <label class="tag-label"><input type="checkbox" value="25-34"><span>25–34</span></label>
+          <label class="tag-label"><input type="checkbox" value="35-44"><span>35–44</span></label>
+          <label class="tag-label"><input type="checkbox" value="45-54"><span>45–54</span></label>
+          <label class="tag-label"><input type="checkbox" value="55-64"><span>55–64</span></label>
+        </div>
+      </div>
+
+      <!-- Education levels -->
+      <div class="filter-group">
+        <label>Nivel educație</label>
+        <div class="tag-group" id="fg-edu" role="group" aria-label="Filtrare după educație">
+          <label class="tag-label"><input type="checkbox" value="primar"><span>Primar</span></label>
+          <label class="tag-label"><input type="checkbox" value="secundar"><span>Secundar</span></label>
+          <label class="tag-label"><input type="checkbox" value="superior"><span>Superior</span></label>
+        </div>
+      </div>
+
+      <!-- Environment -->
+      <div class="filter-group">
+        <label>Mediu</label>
+        <div class="tag-group" id="fg-env" role="group" aria-label="Filtrare după mediu">
+          <label class="tag-label"><input type="checkbox" value="urban"><span>Urban</span></label>
+          <label class="tag-label"><input type="checkbox" value="rural"><span>Rural</span></label>
+        </div>
+      </div>
+
+      <!-- Date range: from -->
+      <div class="filter-group">
+        <label>De la</label>
+        <div class="date-pair">
+          <select id="f-year-from" aria-label="An de start">
+            <option value="2020">2020</option>
+            <option value="2021">2021</option>
+            <option value="2022">2022</option>
+            <option value="2023">2023</option>
+            <option value="2024" selected>2024</option>
+            <option value="2025">2025</option>
+          </select>
+          <select id="f-month-from" aria-label="Lună de start">
+            <option value="1" selected>Ian</option><option value="2">Feb</option>
+            <option value="3">Mar</option><option value="4">Apr</option>
+            <option value="5">Mai</option><option value="6">Iun</option>
+            <option value="7">Iul</option><option value="8">Aug</option>
+            <option value="9">Sep</option><option value="10">Oct</option>
+            <option value="11">Noi</option><option value="12">Dec</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Date range: to -->
+      <div class="filter-group">
+        <label>Până la</label>
+        <div class="date-pair">
+          <select id="f-year-to" aria-label="An final">
+            <option value="2020">2020</option>
+            <option value="2021">2021</option>
+            <option value="2022">2022</option>
+            <option value="2023">2023</option>
+            <option value="2024">2024</option>
+            <option value="2025" selected>2025</option>
+          </select>
+          <select id="f-month-to" aria-label="Lună finală">
+            <option value="1">Ian</option><option value="2">Feb</option>
+            <option value="3">Mar</option><option value="4" selected>Apr</option>
+            <option value="5">Mai</option><option value="6">Iun</option>
+            <option value="7">Iul</option><option value="8">Aug</option>
+            <option value="9">Sep</option><option value="10">Oct</option>
+            <option value="11">Noi</option><option value="12">Dec</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Pie chart grouping -->
+      <div class="filter-group">
+        <label for="f-group-pie">Distribuție (plăcintă)</label>
+        <select id="f-group-pie">
+          <option value="age_group">Grupă vârstă</option>
+          <option value="education_level">Educație</option>
+          <option value="environment">Mediu</option>
+        </select>
+      </div>
+
+      <div class="filter-group filter-apply">
+        <button class="btn btn-primary" id="btn-apply" type="button">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Aplică filtre
+        </button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Export bar ────────────────────────────────────────── -->
+  <div id="export-bar" role="toolbar" aria-label="Export date">
+    <span class="export-label">Export</span>
+    <button class="btn btn-outline btn-sm" id="btn-export-csv">⬇ CSV</button>
+    <button class="btn btn-outline btn-sm" id="btn-export-json">⬇ JSON</button>
+    <button class="btn btn-outline btn-sm" id="btn-export-bar-svg">⬇ SVG Bare</button>
+    <button class="btn btn-outline btn-sm" id="btn-export-line-svg">⬇ SVG Linie</button>
+    <button class="btn btn-outline btn-sm" id="btn-export-pie-svg">⬇ SVG Plăcintă</button>
+    <button class="btn btn-outline btn-sm" id="btn-export-map-svg">⬇ SVG Hartă</button>
+    <button class="btn btn-outline btn-sm" id="btn-export-pdf">⎙ PDF</button>
+  </div>
+
+  <!-- ── Charts grid ───────────────────────────────────────── -->
+  <div id="charts">
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Rata șomajului pe județe</span>
+        <span class="card-icon" aria-hidden="true">📊</span>
+      </div>
+      <div class="chart-wrap" id="chart-bar">
+        <div class="state-msg">Se încarcă...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Evoluție temporală</span>
+        <span class="card-icon" aria-hidden="true">📈</span>
+      </div>
+      <div class="chart-wrap" id="chart-line">
+        <div class="state-msg">Se încarcă...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Distribuție pe categorii</span>
+        <span class="card-icon" aria-hidden="true">🥧</span>
+      </div>
+      <div class="chart-wrap" id="chart-pie">
+        <div class="state-msg">Se încarcă...</div>
+      </div>
+    </div>
+
+    <div class="card" id="chart-map-card">
+      <div class="card-header">
+        <span class="card-title">Hartă — rata șomajului pe județe</span>
+        <span class="card-icon" aria-hidden="true">🗺️</span>
+      </div>
+      <div id="map"></div>
+    </div>
+
+  </div>
+</main>
+
+<script src="https://unpkg.com/d3@7/dist/d3.min.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

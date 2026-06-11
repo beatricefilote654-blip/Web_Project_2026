@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UnD – Documentație tehnică</title>
+  <style>
+    :root { --primary: #2563eb; --text: #1e293b; --muted: #64748b; --border: #e2e8f0; }
+    body { font-family: Georgia, serif; max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem; color: var(--text); line-height: 1.75; }
+    h1 { font-size: 2rem; color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: .5rem; }
+    h2 { font-size: 1.35rem; margin-top: 2rem; border-left: 4px solid var(--primary); padding-left: .75rem; color: var(--text); }
+    h3 { font-size: 1.05rem; margin-top: 1.25rem; color: var(--primary); }
+    code, pre { font-family: monospace; background: #f1f5f9; border-radius: 4px; }
+    code { padding: .1em .4em; font-size: .88em; }
+    pre { padding: 1rem; overflow-x: auto; border: 1px solid var(--border); line-height: 1.5; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .88rem; }
+    th, td { padding: .5rem .75rem; border: 1px solid var(--border); text-align: left; }
+    th { background: #f8fafc; font-weight: 600; }
+    .meta { color: var(--muted); font-size: .9rem; margin-bottom: 2rem; }
+    section { margin-bottom: 2.5rem; }
+    ul { padding-left: 1.5rem; }
+    li { margin-bottom: .3rem; }
+    footer { margin-top: 3rem; border-top: 1px solid var(--border); padding-top: 1rem; font-size: .85rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<article typeof="schema:TechArticle" vocab="https://schema.org/">
+
+<h1 property="schema:name">UnD – Unemployment Data Visualizer</h1>
+<p class="meta">
+  <span property="schema:description">
+    Instrument Web de vizualizare și comparare multi-criterială a datelor publice
+    privind șomajul înregistrat din România, bazat pe statisticile oficiale ANOFM
+    disponibile pe portalul date.gov.ro.
+  </span><br>
+  Disciplina: <strong>Tehnologii Web 2026</strong> &mdash;
+  Facultatea de Informatică, UAIC Iași<br>
+  Autori: <span property="schema:author">Dron Gabriel</span><br>
+  Versiune: <span property="schema:version">2.0</span> &mdash;
+  Data: <span property="schema:datePublished">2026-06-10</span>
+</p>
+
+<!-- ── 1. Abstract ──────────────────────────────────────────── -->
+<section id="abstract">
+  <h2>Rezumat</h2>
+  <p>
+    <strong>UnD</strong> este o aplicație Web server-side care permite vizualizarea și
+    compararea multi-criterială a datelor publice privind șomajul înregistrat din România
+    pe o perioadă de <strong>63 de luni</strong> (ianuarie 2020 – aprilie 2025), adică
+    L = 63 &gt; 16.
+  </p>
+  <p>
+    Utilizatorii pot filtra datele după județ (toate cele 42 de județe ale României),
+    grupă de vârstă, nivel de educație, mediu (urban/rural) și interval de timp, obținând
+    vizualizări interactive (grafic cu bare, grafic liniar, grafic donut și hartă coropleth)
+    exportabile în formatele CSV, JSON, SVG și PDF. Un modul de administrare separat permite
+    importul manual și actualizarea automată a datelor direct din API-ul public al portalului
+    <a href="https://data.gov.ro">data.gov.ro</a>.
+  </p>
+</section>
+
+<!-- ── 2. Cerințe funcționale ───────────────────────────────── -->
+<section id="requirements">
+  <h2>Cerințe funcționale implementate</h2>
+
+  <h3>Vizualizare (4 tipuri de grafice)</h3>
+  <ul>
+    <li><strong>Grafic cu bare</strong> — rata medie a șomajului per județ în intervalul selectat</li>
+    <li><strong>Grafic liniar</strong> — evoluția temporală a ratei medii lunare</li>
+    <li><strong>Grafic donut (plăcintă)</strong> — distribuția pe categorii (vârstă / educație / mediu), selectabilă din UI</li>
+    <li><strong>Hartă coropleth</strong> — rata șomajului suprapusă pe harta administrativă a României (SVG pur, fără tile-uri externe, proiecție D3 geoMercator)</li>
+  </ul>
+  <p>Toate graficele sunt construite cu <strong>D3.js v7</strong> și redau SVG-uri exportabile direct.</p>
+
+  <h3>Filtrare multi-criterială</h3>
+  <ul>
+    <li>Județ: dropdown personalizat cu selecție multiplă, căutare live și butoane „Toate / Niciuna"</li>
+    <li>Grupă de vârstă: 15–24, 25–34, 35–44, 45–54, 55–64 (pill-checkboxes)</li>
+    <li>Nivel de educație: primar, secundar, superior</li>
+    <li>Mediu: urban, rural</li>
+    <li>Interval de timp: lună/an de start și lună/an de final (2020–2025)</li>
+  </ul>
+
+  <h3>Export date</h3>
+  <ul>
+    <li><strong>CSV</strong> — descărcare directă din <code>api/export.php?format=csv</code></li>
+    <li><strong>JSON</strong> — descărcare directă din <code>api/export.php?format=json</code></li>
+    <li><strong>SVG</strong> — serializare D3 pentru fiecare grafic: bare, linie, donut, hartă (4 butoane)</li>
+    <li><strong>PDF</strong> — via <code>window.print()</code> cu CSS @media print adaptat</li>
+  </ul>
+
+  <h3>Administrare</h3>
+  <ul>
+    <li>Autentificare cu sesiune PHP (parole stocate bcrypt)</li>
+    <li>Dashboard cu statistici: număr înregistrări, luni de date, intrări în cache</li>
+    <li>Import date manual: fișier CSV sau JSON</li>
+    <li><strong>Actualizare date din API</strong> — buton care apelează <code>api/admin.php?action=refresh_data</code>; descarcă și parsează automat toate lunile disponibile pe data.gov.ro prin Server-Sent Events (progres în timp real)</li>
+    <li>Golire cache interogări (TTL 3600s)</li>
+    <li>Navigare și ștergere înregistrări (paginat, 50/pagină)</li>
+  </ul>
+</section>
+
+<!-- ── 3. Arhitectură C4 ─────────────────────────────────────── -->
+<section id="architecture">
+  <h2>Arhitectură (model C4)</h2>
+
+  <h3>Nivel 1 – Context</h3>
+  <pre>
+  [Utilizator]      --HTTP--> [Aplicație Web UnD]
+  [Administrator]   --HTTP--> [Panou Admin UnD]
+                              [Aplicație Web UnD] --HTTPS--> [API data.gov.ro (ANOFM)]
+  </pre>
+
+  <h3>Nivel 2 – Containere</h3>
+  <table>
+    <thead>
+      <tr><th>Container</th><th>Tehnologie</th><th>Responsabilitate</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Frontend</td><td>HTML5 + CSS3 + JS ES Modules (D3.js v7)</td><td>UI, filtre, randare grafice SVG, export SVG/PDF</td></tr>
+      <tr><td>API Backend</td><td>PHP 8.5 (fără framework)</td><td>Interogări DB, export CSV/JSON, autentificare, fetch API extern</td></tr>
+      <tr><td>Bază de date</td><td>SQLite 3 (PDO)</td><td>Înregistrări șomaj, cache interogări, utilizatori admin</td></tr>
+      <tr><td>Serviciu date</td><td>data.gov.ro CKAN API + ANOFM</td><td>Sursă date oficiale, accesat la cererea adminului</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Nivel 3 – Componente API</h3>
+  <table>
+    <thead>
+      <tr><th>Fișier</th><th>Endpoint / Rol</th><th>Descriere</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>api/data.php</code></td><td>GET /api/data.php</td><td>Interogare date cu filtre multi-criteriale + cache SQLite (TTL 1h)</td></tr>
+      <tr><td><code>api/export.php</code></td><td>GET /api/export.php?format=csv|json</td><td>Export date filtrate în CSV sau JSON</td></tr>
+      <tr><td><code>api/admin.php</code></td><td>GET|POST /api/admin.php?action=…</td><td>Acțiuni admin: stats, import, delete, flush_cache, refresh_data (SSE)</td></tr>
+      <tr><td><code>api/fetcher.php</code></td><td>include din admin.php</td><td>Descarcă și parsează CSV-urile lunare de pe data.gov.ro (auto-detectare delimitator)</td></tr>
+      <tr><td><code>api/auth.php</code></td><td>include din admin.php</td><td>Autentificare sesiune PHP cu bcrypt</td></tr>
+      <tr><td><code>api/cache.php</code></td><td>include din data.php</td><td>Citire/scriere/golire cache în tabela SQLite</td></tr>
+      <tr><td><code>api/db.php</code></td><td>include din toate</td><td>Singleton PDO pentru conexiunea la SQLite</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Nivel 4 – Model de date</h3>
+  <pre>
+counties              (id PK, code TEXT UNIQUE, name TEXT)
+unemployment_records  (id PK, county_id FK, year INT, month INT,
+                        age_group TEXT, education_level TEXT,
+                        environment TEXT, value REAL, count INT,
+                        UNIQUE(county_id, year, month, age_group,
+                               education_level, environment))
+cache_entries         (cache_key TEXT PK, payload TEXT, created_at INT)
+admin_users           (id PK, username TEXT UNIQUE, password_hash TEXT)
+  </pre>
+  <p>
+    Datele reale provin de la <strong>ANOFM</strong> prin API-ul CKAN al portalului
+    <a href="https://data.gov.ro">data.gov.ro</a> și acoperă
+    <strong>63 de luni</strong> (ianuarie 2020 – aprilie 2025),
+    42 de județe, 5 grupe de vârstă, 3 niveluri de educație, 2 medii =
+    <strong>26.708 înregistrări</strong>.
+  </p>
+</section>
+
+<!-- ── 4. Securitate ─────────────────────────────────────────── -->
+<section id="security">
+  <h2>Securitate</h2>
+  <ul>
+    <li>
+      <strong>Injecție SQL</strong>: toate interogările folosesc
+      <code>PDO::prepare()</code> cu parametri legați (<code>execute([$p1, $p2, …])</code>).
+      Nicio valoare provenită din input utilizator nu este interpolată direct în SQL.
+    </li>
+    <li>
+      <strong>XSS</strong>: valorile afișate în template-uri JS folosesc
+      un helper <code>esc(s)</code> bazat pe <code>String.replace</code>
+      pentru caracterele <code>&amp; &lt; &gt; &quot;</code>;
+      output-ul API PHP este JSON pur (nu HTML).
+    </li>
+    <li>
+      <strong>Autentificare</strong>: parole stocate cu
+      <code>password_hash(PASSWORD_BCRYPT)</code>,
+      verificate cu <code>password_verify()</code>.
+      Sesiunile PHP protejează toate acțiunile admin.
+    </li>
+    <li>
+      <strong>Protecție fișiere</strong>: <code>.htaccess</code> blochează
+      accesul direct la directoarele <code>db/</code> și <code>scripts/</code>.
+    </li>
+    <li>
+      <strong>Headers de securitate</strong>:
+      <code>X-Content-Type-Options: nosniff</code>,
+      <code>X-Frame-Options: SAMEORIGIN</code>,
+      <code>X-XSS-Protection: 1; mode=block</code>.
+    </li>
+  </ul>
+</section>
+
+<!-- ── 5. Caching ────────────────────────────────────────────── -->
+<section id="caching">
+  <h2>Mecanism de caching</h2>
+  <p>
+    Fiecare cerere către <code>api/data.php</code> generează un
+    <code>cache_key = md5(json_encode(filters))</code>.
+    Rezultatul JSON este stocat în tabela <code>cache_entries</code> cu un TTL de
+    <strong>3600 secunde</strong>. La fiecare cerere sistemul verifică mai întâi
+    cache-ul; dacă intrarea există și nu a expirat, returnează payload-ul direct
+    fără a interoga tabela principală — reducând semnificativ latența pentru
+    filtre repetate.
+  </p>
+  <p>
+    Există două niveluri de invalidare:
+  </p>
+  <ul>
+    <li><strong>Golire cache interogări</strong> — șterge doar <code>cache_entries</code>;
+    datele rămân intacte, interogările se re-calculează la prima accesare.</li>
+    <li><strong>Actualizare date din API</strong> — șterge atât
+    <code>cache_entries</code> cât și <code>unemployment_records</code>,
+    apoi repopulează din data.gov.ro.</li>
+  </ul>
+</section>
+
+<!-- ── 6. Design responsiv ───────────────────────────────────── -->
+<section id="responsive">
+  <h2>Design responsiv</h2>
+  <p>
+    Interfața utilizează <strong>CSS Grid</strong> și <strong>Flexbox</strong>
+    fără niciun framework CSS extern, cu breakpoint-uri la
+    <strong>960px</strong> și <strong>640px</strong>:
+  </p>
+  <ul>
+    <li>Sub 960px: graficele trec de la 2 coloane la 1 coloană.</li>
+    <li>Sub 640px: header-ul se stivuiește, subtitlul dispare pentru economie de spațiu,
+    fiecare grup de filtre ocupă lățimea completă, butoanele de export se
+    micșorează și se împachetează pe mai multe rânduri,
+    înălțimea graficelor scade la 240px, iar harta la 300px.</li>
+  </ul>
+  <p>
+    Butoanele și țintele de atingere au un minim de 32px înălțime;
+    dropdown-ul de județe folosește
+    <code>min(240px, 100vw - 1.5rem)</code> pentru a nu depăși ecranul.
+  </p>
+</section>
+
+<!-- ── 7. Rulare locală ──────────────────────────────────────── -->
+<section id="run">
+  <h2>Rulare locală</h2>
+  <pre>
+# Cerințe: PHP ≥ 8.0 cu extensia pdo_sqlite
+
+# 1. Clonare repository
+git clone https://github.com/&lt;username&gt;/und.git
+cd und
+
+# 2. Pornire server PHP built-in
+#    (baza de date și tabelele se creează automat la prima cerere)
+php -S localhost:8080
+
+# 3. Deschide în browser
+#    Dashboard:  http://localhost:8080/
+#    Admin:      http://localhost:8080/admin/
+#                (user: admin / parolă: admin123)
+
+# 4. Populare cu date reale
+#    În panoul Admin → Cache → „Actualizare date din API"
+
+</pre>
+</section>
+
+<!-- ── 8. Repository ─────────────────────────────────────────── -->
+<section id="repo">
+  <h2>Repository</h2>
+  <p>
+    Codul sursă complet este disponibil pe GitHub:
+    <a href="https://github.com/gabidron/und">github.com/gabidron/und</a>
+  </p>
+</section>
+
+</article>
+
+<footer>
+  <p>UnD – Unemployment Data Visualizer &mdash; Tehnologii Web 2026, Facultatea de Informatică UAIC Iași</p>
+</footer>
+</body>
+</html>

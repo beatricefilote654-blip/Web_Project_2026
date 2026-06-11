@@ -1,0 +1,21 @@
+# Prevent direct access to sensitive directories
+Options -Indexes
+
+<FilesMatch "\.(sqlite|py|sh)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Block access to db/ and scripts/
+    RewriteRule ^db/ - [F,L]
+    RewriteRule ^scripts/ - [F,L]
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>

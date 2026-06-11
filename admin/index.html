@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UnD – Administrare</title>
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+<header>
+  <h1>UnD – Panou de Administrare</h1>
+  <nav>
+    <a href="../index.html">Dashboard</a>
+    <a href="#" id="btn-logout">Deconectare</a>
+  </nav>
+</header>
+
+<main>
+  <!-- Login screen -->
+  <div id="login-screen" class="card" style="max-width:360px;margin:3rem auto;display:none">
+    <div class="card-title">Autentificare administrator</div>
+    <div id="login-alert"></div>
+    <form id="login-form">
+      <div class="form-group">
+        <label for="u-user">Utilizator</label>
+        <input id="u-user" type="text" autocomplete="username" required>
+      </div>
+      <div class="form-group">
+        <label for="u-pass">Parolă</label>
+        <input id="u-pass" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn btn-primary" type="submit" style="width:100%">Autentificare</button>
+    </form>
+  </div>
+
+  <!-- Admin panel -->
+  <div id="admin-panel" style="display:none">
+    <div class="admin-layout">
+      <aside class="admin-sidebar card" style="align-self:start">
+        <a href="#" class="active" data-section="dashboard">Tablou de bord</a>
+        <a href="#" data-section="import">Import date</a>
+        <a href="#" data-section="records">Înregistrări</a>
+        <a href="#" data-section="cache">Cache</a>
+      </aside>
+
+      <div id="admin-content">
+        <!-- Dashboard -->
+        <section id="s-dashboard" class="card">
+          <div class="card-title">Statistici bază de date</div>
+          <div id="stats-content"><p class="loading-msg">Se încarcă...</p></div>
+        </section>
+
+        <!-- Import -->
+        <section id="s-import" class="card" style="display:none">
+          <div class="card-title">Import date</div>
+          <div id="import-alert"></div>
+          <p style="font-size:.875rem;color:var(--text-muted);margin-bottom:1rem">
+            Format CSV așteptat: <code>county_code, county_name, year, month, age_group, education_level, environment, value</code>
+          </p>
+          <div class="form-group">
+            <label>Import CSV</label>
+            <input type="file" id="import-csv-file" accept=".csv">
+            <button class="btn btn-primary btn-sm" id="btn-import-csv" style="margin-top:.5rem">Importă CSV</button>
+          </div>
+          <hr style="margin:1rem 0;border:none;border-top:1px solid var(--border)">
+          <div class="form-group">
+            <label>Import JSON</label>
+            <input type="file" id="import-json-file" accept=".json">
+            <button class="btn btn-primary btn-sm" id="btn-import-json" style="margin-top:.5rem">Importă JSON</button>
+          </div>
+        </section>
+
+        <!-- Records -->
+        <section id="s-records" class="card" style="display:none">
+          <div class="card-title">Înregistrări <span id="records-count" style="font-weight:400;color:var(--text-muted)"></span></div>
+          <div style="overflow-x:auto">
+            <table class="tbl" id="records-table">
+              <thead>
+                <tr>
+                  <th>Județ</th><th>An</th><th>Lună</th>
+                  <th>Vârstă</th><th>Educație</th><th>Mediu</th>
+                  <th>Valoare</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="records-body"></tbody>
+            </table>
+          </div>
+          <div id="records-pagination" style="margin-top:.75rem;display:flex;gap:.5rem;align-items:center;font-size:.875rem"></div>
+        </section>
+
+        <!-- Cache -->
+        <section id="s-cache" class="card" style="display:none">
+          <div class="card-title">Gestionare Cache &amp; Date</div>
+          <div id="cache-alert"></div>
+
+          <div style="display:flex;flex-direction:column;gap:1.25rem">
+            <div style="padding:1rem;border:1px solid var(--border);border-radius:8px;background:var(--bg)">
+              <div style="font-weight:600;margin-bottom:.35rem">Cache interogări</div>
+              <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.75rem">
+                Șterge rezultatele stocate ale interogărilor (se regenerează automat la următoarea cerere).
+              </p>
+              <button class="btn btn-secondary" id="btn-flush-cache">Golire cache interogări</button>
+            </div>
+
+            <div style="padding:1rem;border:1px solid var(--border);border-radius:8px;background:var(--bg)">
+              <div style="font-weight:600;margin-bottom:.35rem">Actualizare date din API</div>
+              <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.75rem">
+                Repornește descărcarea tuturor datelor oficiale ANOFM de pe data.gov.ro. Durată estimată: 1–2 minute.
+              </p>
+              <button class="btn btn-primary" id="btn-refresh-api">⟳ Actualizare date din API</button>
+              <div id="refresh-log" style="display:none;margin-top:.85rem;background:#0f172a;color:#94a3b8;border-radius:6px;padding:.65rem .85rem;font-size:.8rem;font-family:monospace;max-height:220px;overflow-y:auto;line-height:1.6"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const API = '../api/admin.php';
+
+async function api(action, opts = {}) {
+  const url = API + '?action=' + action + (opts.query || '');
+  const res = await fetch(url, { method: opts.method || 'GET', body: opts.body, headers: opts.headers });
+  return res.json();
+}
+
+function showAlert(id, msg, type = 'success') {
+  const el = document.getElementById(id);
+  el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+  setTimeout(() => { el.innerHTML = ''; }, 4000);
+}
+
+// Session check
+async function checkSession() {
+  const data = await api('session');
+  if (data.admin) {
+    showAdmin();
+  } else {
+    document.getElementById('login-screen').style.display = 'block';
+  }
+}
+
+function showAdmin() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('admin-panel').style.display = 'block';
+  loadStats();
+}
+
+// Login
+document.getElementById('login-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const username = document.getElementById('u-user').value;
+  const password = document.getElementById('u-pass').value;
+  const data = await api('login', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
+    headers: { 'Content-Type': 'application/json' }
+  });
+  if (data.ok) {
+    showAdmin();
+  } else {
+    showAlert('login-alert', 'Credențiale incorecte.', 'error');
+  }
+});
+
+// Logout
+document.getElementById('btn-logout').addEventListener('click', async e => {
+  e.preventDefault();
+  await api('logout');
+  location.reload();
+});
+
+// Sidebar navigation
+document.querySelectorAll('.admin-sidebar a[data-section]').forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    document.querySelectorAll('.admin-sidebar a').forEach(a => a.classList.remove('active'));
+    link.classList.add('active');
+    document.querySelectorAll('#admin-content section').forEach(s => s.style.display = 'none');
+    const sec = 's-' + link.dataset.section;
+    document.getElementById(sec).style.display = 'block';
+    if (link.dataset.section === 'records') loadRecords(1);
+  });
+});
+
+// Stats
+async function loadStats() {
+  const data = await api('stats');
+  document.getElementById('stats-content').innerHTML = `
+    <div class="grid-3">
+      <div class="card" style="text-align:center">
+        <div style="font-size:2rem;font-weight:700;color:var(--primary)">${data.records.toLocaleString()}</div>
+        <div style="font-size:.85rem;color:var(--text-muted)">Înregistrări totale</div>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:2rem;font-weight:700;color:var(--accent)">${data.months}</div>
+        <div style="font-size:.85rem;color:var(--text-muted)">Luni de date</div>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:2rem;font-weight:700;color:var(--success)">${data.cache_entries}</div>
+        <div style="font-size:.85rem;color:var(--text-muted)">Intrări în cache</div>
+      </div>
+    </div>`;
+}
+
+// Import CSV
+document.getElementById('btn-import-csv').addEventListener('click', async () => {
+  const file = document.getElementById('import-csv-file').files[0];
+  if (!file) { showAlert('import-alert', 'Selectați un fișier.', 'error'); return; }
+  const fd = new FormData(); fd.append('file', file);
+  const data = await fetch(API + '?action=import_csv', { method: 'POST', body: fd }).then(r => r.json());
+  if (data.ok) showAlert('import-alert', `Importate ${data.imported} înregistrări.`);
+  else showAlert('import-alert', data.error || 'Eroare.', 'error');
+});
+
+// Import JSON
+document.getElementById('btn-import-json').addEventListener('click', async () => {
+  const file = document.getElementById('import-json-file').files[0];
+  if (!file) { showAlert('import-alert', 'Selectați un fișier.', 'error'); return; }
+  const text = await file.text();
+  let json;
+  try { json = JSON.parse(text); } catch { showAlert('import-alert', 'JSON invalid.', 'error'); return; }
+  const data = await api('import_json', { method: 'POST', body: JSON.stringify(json), headers: { 'Content-Type': 'application/json' } });
+  if (data.ok) showAlert('import-alert', `Importate ${data.imported} înregistrări.`);
+  else showAlert('import-alert', data.error || 'Eroare.', 'error');
+});
+
+// Records
+let currentPage = 1;
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function loadRecords(page) {
+  currentPage = page;
+  const data = await api('records', { query: '&page=' + page });
+  const tbody = document.getElementById('records-body');
+  tbody.innerHTML = data.rows.map(r => `
+    <tr>
+      <td>${esc(r.code)} – ${esc(r.county)}</td>
+      <td>${esc(r.year)}</td><td>${esc(r.month)}</td>
+      <td>${esc(r.age_group)}</td><td>${esc(r.education_level)}</td><td>${esc(r.environment)}</td>
+      <td>${esc(r.value)}%</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteRecord(${+r.id})">Șterge</button></td>
+    </tr>`).join('');
+  document.getElementById('records-count').textContent = `(${data.total.toLocaleString()} total)`;
+  const pages = Math.ceil(data.total / 50);
+  const pag = document.getElementById('records-pagination');
+  pag.innerHTML = '';
+  if (page > 1) { const b = document.createElement('button'); b.className = 'btn btn-secondary btn-sm'; b.textContent = '« Anterior'; b.onclick = () => loadRecords(page - 1); pag.appendChild(b); }
+  pag.appendChild(Object.assign(document.createElement('span'), { textContent: `Pagina ${page} din ${pages}` }));
+  if (page < pages) { const b = document.createElement('button'); b.className = 'btn btn-secondary btn-sm'; b.textContent = 'Următor »'; b.onclick = () => loadRecords(page + 1); pag.appendChild(b); }
+}
+
+async function deleteRecord(id) {
+  if (!confirm('Ștergeți această înregistrare?')) return;
+  const data = await api('delete', { method: 'POST', body: JSON.stringify({ id }), headers: { 'Content-Type': 'application/json' } });
+  if (data.ok) loadRecords(currentPage);
+}
+
+// Cache flush
+document.getElementById('btn-flush-cache').addEventListener('click', async () => {
+  const data = await api('flush_cache');
+  showAlert('cache-alert', data.message || 'Cache golit.');
+  loadStats();
+});
+
+// API refresh (SSE streaming)
+document.getElementById('btn-refresh-api').addEventListener('click', function() {
+  const btn = this;
+  const log = document.getElementById('refresh-log');
+  btn.disabled = true;
+  btn.textContent = '⏳ Se descarcă date…';
+  log.style.display = 'block';
+  log.innerHTML = '';
+
+  const appendLog = (msg, cls = '') => {
+    const line = document.createElement('div');
+    if (cls) line.style.color = cls;
+    line.textContent = msg;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+  };
+
+  appendLog('Conectare la data.gov.ro…', '#60a5fa');
+
+  const es = new EventSource('../api/admin.php?action=refresh_data');
+
+  es.onmessage = e => {
+    const d = JSON.parse(e.data);
+    if (d.type === 'start') {
+      appendLog(d.msg, '#60a5fa');
+    } else if (d.type === 'progress') {
+      const ok = d.msg.startsWith('OK');
+      appendLog(d.msg, ok ? '#4ade80' : '#f87171');
+    } else if (d.type === 'done') {
+      const r = d.msg;
+      appendLog(`✓ Gata: ${r.months} luni, ${r.total.toLocaleString()} înregistrări importate.`, '#4ade80');
+      if (r.errors?.length) appendLog(`Erori: ${r.errors.join('; ')}`, '#f87171');
+      es.close();
+      btn.disabled = false;
+      btn.textContent = '⟳ Actualizare date din API';
+      loadStats();
+    } else if (d.type === 'error') {
+      appendLog('Eroare: ' + d.msg, '#f87171');
+      es.close();
+      btn.disabled = false;
+      btn.textContent = '⟳ Actualizare date din API';
+    }
+  };
+
+  es.onerror = () => {
+    appendLog('Conexiune închisă.', '#94a3b8');
+    es.close();
+    btn.disabled = false;
+    btn.textContent = '⟳ Actualizare date din API';
+    loadStats();
+  };
+});
+
+checkSession();
+</script>
+</body>
+</html>
