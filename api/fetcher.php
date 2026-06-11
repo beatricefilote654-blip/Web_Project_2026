@@ -1,7 +1,9 @@
 <?php
 // Fetches ANOFM unemployment data from data.gov.ro into the local SQLite DB.
 // Call fetch_all_data($pdo) to (re)populate unemployment_records.
-error_reporting(0);
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
 
 define('DATAGOV_API', 'https://data.gov.ro/api/3/action/package_search?q=somaj+inregistrat&rows=100&sort=metadata_created+desc');
 

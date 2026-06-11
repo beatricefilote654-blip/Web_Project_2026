@@ -8,7 +8,7 @@ export function renderMap(geojsonData, countyValues, containerId = 'map') {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
 
-  const W = container.clientWidth || 720;
+  const W = Math.max(container.clientWidth || 720, 320);
   const H = container.clientHeight || 420;
 
   const values = Object.values(countyValues).filter(v => v > 0);
@@ -25,7 +25,10 @@ export function renderMap(geojsonData, countyValues, containerId = 'map') {
 
   const svg = d3.select(container)
     .append('svg')
-    .attr('width', W).attr('height', H)
+    .attr('viewBox', `0 0 ${W} ${H}`)
+    .attr('preserveAspectRatio', 'xMidYMid meet')
+    .attr('width', '100%').attr('height', '100%')
+    .style('display', 'block')
     .attr('xmlns', 'http://www.w3.org/2000/svg');
 
   // Tooltip
@@ -47,7 +50,11 @@ export function renderMap(geojsonData, countyValues, containerId = 'map') {
     .on('mouseover', function(event, d) {
       d3.select(this).attr('stroke', '#334155').attr('stroke-width', 2);
       const v = countyValues[d.properties.code];
-      tip.innerHTML = `<strong>${d.properties.name}</strong><br>${v != null ? v.toFixed(2) + '%' : 'N/A'}`;
+      tip.textContent = '';
+      const strong = document.createElement('strong');
+      strong.textContent = String(d.properties.name);
+      tip.append(strong, document.createElement('br'),
+                 document.createTextNode(v != null ? v.toFixed(2) + '%' : 'N/A'));
       tip.style.display = 'block';
     })
     .on('mousemove', function(event) {

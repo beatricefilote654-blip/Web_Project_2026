@@ -72,7 +72,17 @@ function _bootstrap(PDO $pdo): void {
     $stmt = $pdo->prepare("INSERT OR IGNORE INTO counties (code, name) VALUES (?, ?)");
     foreach ($counties as [$code, $name]) $stmt->execute([$code, $name]);
 
-    // Default admin account (admin / admin123)
-    $pdo->prepare("INSERT OR IGNORE INTO admin_users (username, password_hash) VALUES (?, ?)")
-        ->execute(['admin', password_hash('admin123', PASSWORD_BCRYPT)]);
+    // Default admin account — random password generated once on first bootstrap.
+    // The plaintext is written to db/ADMIN_PASSWORD.txt (server-only, blocked by .htaccess).
+    $exists = (int)$pdo->query("SELECT COUNT(*) FROM admin_users WHERE username = 'admin'")->fetchColumn();
+    if ($exists === 0) {
+        $plain = bin2hex(random_bytes(8));
+        $pdo->prepare("INSERT INTO admin_users (username, password_hash) VALUES (?, ?)")
+            ->execute(['admin', password_hash($plain, PASSWORD_BCRYPT)]);
+        $pwFile = __DIR__ . '/../db/ADMIN_PASSWORD.txt';
+        @file_put_contents($pwFile,
+            "Initial admin credentials (delete this file after first login):\n" .
+            "  username: admin\n  password: $plain\n");
+        @chmod($pwFile, 0600);
+    }
 }

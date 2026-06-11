@@ -107,6 +107,27 @@ main { max-width: 1300px; margin: 0 auto; padding: 1.25rem 1.25rem; }
   align-items: flex-end;
 }
 
+/* Notă explicativă pentru mutual-exclusive pe vârstă/educație/mediu */
+.filter-notice {
+  font-size: .78rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  background: #f1f5f9;
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  padding: .5rem .75rem;
+  margin-bottom: .75rem;
+}
+.filter-notice.is-active {
+  background: #eff6ff;
+  border-left-color: var(--primary);
+  color: var(--text);
+}
+
+/* Stare disabled pentru grupurile de filtre mutual-exclusive */
+.tag-group.is-disabled { opacity: .4; pointer-events: none; }
+.tag-group.is-disabled .tag-label { cursor: not-allowed; }
+
 .filter-group {
   display: flex;
   flex-direction: column;

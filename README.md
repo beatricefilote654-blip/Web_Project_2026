@@ -39,3 +39,11 @@ docs/README.html    Documentație tehnică
 ## Repository
 
 [github.com/beatricefilote654-blip/Web_Project_2026](https://github.com/beatricefilote654-blip/Web_Project_2026)
+
+## Licență
+
+Cod sursă: [MIT License](LICENSE).
+
+Atribuire date și resurse:
+- **Date șomaj** — ANOFM via [data.gov.ro](https://data.gov.ro), licențiate sub Creative Commons Attribution 4.0 (CC BY 4.0).
+- **GeoJSON județe România** — derivat din OpenStreetMap, © OpenStreetMap contributors, Open Database License (ODbL).

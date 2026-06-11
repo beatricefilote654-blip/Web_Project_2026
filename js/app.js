@@ -96,6 +96,30 @@ function checkedValues(groupId) {
   return Array.from(document.querySelectorAll(`#${groupId} input:checked`)).map(i => i.value);
 }
 
+// Sursa ANOFM publică doar totaluri marginale: un rând are *fie* o grupă de vârstă
+// specifică, *fie* un nivel de educație, *fie* un mediu — niciodată două dintre ele
+// împreună. Filtrele simultane returnează 0 rezultate. Soluție UX: când un grup
+// devine activ, le dezactivăm vizual pe celelalte două.
+const DIMENSION_GROUPS = ['fg-age', 'fg-edu', 'fg-env'];
+
+function syncDimensionExclusivity() {
+  const activeIdx = DIMENSION_GROUPS.findIndex(id =>
+    document.querySelectorAll(`#${id} input:checked`).length > 0
+  );
+  DIMENSION_GROUPS.forEach((id, i) => {
+    const disabled = activeIdx !== -1 && i !== activeIdx;
+    const group = document.getElementById(id);
+    group.classList.toggle('is-disabled', disabled);
+    group.querySelectorAll('input').forEach(input => { input.disabled = disabled; });
+  });
+  const notice = document.getElementById('filter-exclusivity-notice');
+  if (notice) notice.classList.toggle('is-active', activeIdx !== -1);
+}
+
+DIMENSION_GROUPS.forEach(id =>
+  document.getElementById(id).addEventListener('change', syncDimensionExclusivity)
+);
+
 function getFilters() {
   // excludedSet holds county codes to hide; convert to an "include" list for the API
   const county = excludedSet.size === 0
@@ -194,6 +218,19 @@ document.getElementById('btn-export-map-svg')
 document.getElementById('btn-export-pdf')
   .addEventListener('click', () => window.print());
 
+// ── Resize handling (debounced) ───────────────────────────────
+let resizeTimer = null;
+let lastWidth = window.innerWidth;
+window.addEventListener('resize', () => {
+  if (Math.abs(window.innerWidth - lastWidth) < 30) return;
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    lastWidth = window.innerWidth;
+    updateCharts();
+  }, 250);
+});
+
 // ── Bootstrap ─────────────────────────────────────────────────
+syncDimensionExclusivity();
 await populateCounties();
 await updateCharts();

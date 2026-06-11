@@ -1,12 +1,13 @@
 <?php
-error_reporting(0);
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/cache.php';
 
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Headers: Content-Type');
+// Admin API is session-authenticated; same-origin only (no CORS exposure)
 
 $action = isset($_GET['action']) ? trim($_GET['action']) : '';
 

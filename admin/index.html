@@ -128,8 +128,13 @@ async function api(action, opts = {}) {
 
 function showAlert(id, msg, type = 'success') {
   const el = document.getElementById(id);
-  el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
-  setTimeout(() => { el.innerHTML = ''; }, 4000);
+  el.textContent = '';
+  const box = document.createElement('div');
+  const safeType = /^[a-z]+$/.test(type) ? type : 'success';
+  box.className = `alert alert-${safeType}`;
+  box.textContent = String(msg);
+  el.appendChild(box);
+  setTimeout(() => { el.textContent = ''; }, 4000);
 }
 
 // Session check

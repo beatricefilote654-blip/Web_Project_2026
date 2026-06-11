@@ -1,7 +1,7 @@
 # Prevent direct access to sensitive directories
 Options -Indexes
 
-<FilesMatch "\.(sqlite|py|sh)$">
+<FilesMatch "\.(sqlite|sqlite3|db|py|sh|env|ini|log|txt)$">
     Order allow,deny
     Deny from all
 </FilesMatch>

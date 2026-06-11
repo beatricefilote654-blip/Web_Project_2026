@@ -23,7 +23,18 @@ function getTip() {
 
 function showTip(event, label, value) {
   const tip = getTip();
-  tip.innerHTML = `<div style="font-weight:700;margin-bottom:2px">${label}</div><div style="color:#94a3b8;font-size:12px">Rata: <span style="color:#60a5fa;font-weight:600">${(+value).toFixed(2)}%</span></div>`;
+  tip.textContent = '';
+  const title = document.createElement('div');
+  title.style.cssText = 'font-weight:700;margin-bottom:2px';
+  title.textContent = String(label);
+  const sub = document.createElement('div');
+  sub.style.cssText = 'color:#94a3b8;font-size:12px';
+  sub.textContent = 'Rata: ';
+  const pct = document.createElement('span');
+  pct.style.cssText = 'color:#60a5fa;font-weight:600';
+  pct.textContent = (+value).toFixed(2) + '%';
+  sub.appendChild(pct);
+  tip.append(title, sub);
   tip.style.display = 'block';
   moveTip(event);
 }
@@ -45,11 +56,16 @@ export function renderBar(containerId, data) {
   container.innerHTML = '';
   if (!data?.length) { container.innerHTML = '<div class="state-msg">Fără date</div>'; return; }
 
-  const W = container.clientWidth || 480, H = 280;
-  const m = { top: 12, right: 16, bottom: 72, left: 46 };
+  const W = Math.max(container.clientWidth || 480, 320);
+  const H = Math.max(container.clientHeight || 280, 240);
+  const m = { top: 12, right: 16, bottom: 80, left: 46 };
   const iW = W - m.left - m.right, iH = H - m.top - m.bottom;
 
-  const svg = d3.select(container).append('svg').attr('width', W).attr('height', H).attr('xmlns', 'http://www.w3.org/2000/svg');
+  const svg = d3.select(container).append('svg')
+    .attr('viewBox', `0 0 ${W} ${H}`)
+    .attr('preserveAspectRatio', 'xMidYMid meet')
+    .attr('width', '100%').attr('height', '100%')
+    .attr('xmlns', 'http://www.w3.org/2000/svg');
   const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
 
   const x = d3.scaleBand().domain(data.map(d => d.label)).range([0, iW]).padding(0.22);
@@ -100,11 +116,16 @@ export function renderLine(containerId, data) {
   container.innerHTML = '';
   if (!data?.length) { container.innerHTML = '<div class="state-msg">Fără date</div>'; return; }
 
-  const W = container.clientWidth || 480, H = 280;
-  const m = { top: 12, right: 16, bottom: 44, left: 46 };
+  const W = Math.max(container.clientWidth || 480, 320);
+  const H = Math.max(container.clientHeight || 280, 240);
+  const m = { top: 12, right: 16, bottom: 56, left: 46 };
   const iW = W - m.left - m.right, iH = H - m.top - m.bottom;
 
-  const svg = d3.select(container).append('svg').attr('width', W).attr('height', H).attr('xmlns', 'http://www.w3.org/2000/svg');
+  const svg = d3.select(container).append('svg')
+    .attr('viewBox', `0 0 ${W} ${H}`)
+    .attr('preserveAspectRatio', 'xMidYMid meet')
+    .attr('width', '100%').attr('height', '100%')
+    .attr('xmlns', 'http://www.w3.org/2000/svg');
   const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
 
   const x = d3.scalePoint().domain(data.map(d => d.label)).range([0, iW]);
@@ -181,10 +202,15 @@ export function renderPie(containerId, data, { title = '' } = {}) {
   container.innerHTML = '';
   if (!data?.length) { container.innerHTML = '<div class="state-msg">Fără date</div>'; return; }
 
-  const W = container.clientWidth || 480, H = 280;
+  const W = Math.max(container.clientWidth || 480, 320);
+  const H = Math.max(container.clientHeight || 280, 240);
   const R = Math.min(W * 0.45, H) / 2 - 16;
 
-  const svg = d3.select(container).append('svg').attr('width', W).attr('height', H).attr('xmlns', 'http://www.w3.org/2000/svg');
+  const svg = d3.select(container).append('svg')
+    .attr('viewBox', `0 0 ${W} ${H}`)
+    .attr('preserveAspectRatio', 'xMidYMid meet')
+    .attr('width', '100%').attr('height', '100%')
+    .attr('xmlns', 'http://www.w3.org/2000/svg');
   const g = svg.append('g').attr('transform', `translate(${W * 0.38},${H / 2})`);
 
   const pie   = d3.pie().value(d => +d.avg_value).sort(null);
