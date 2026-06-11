@@ -76,9 +76,14 @@ export function renderBar(containerId, data) {
     .call(d3.axisLeft(y).ticks(5).tickSize(-iW).tickFormat(''))
     .call(g => { g.select('.domain').remove(); g.selectAll('line').attr('stroke', '#e2e8f0'); });
 
-  // X axis
+  // X axis — pas adaptiv: la ~14px per etichetă rotită, toate intră pe desktop
+  // (42 județe × 14 = 588px, iW ≥ 588 → toate; sub asta stride crește)
+  const minSpacing = 14;
+  const stride = Math.max(1, Math.ceil((data.length * minSpacing) / iW));
+  const tickValues = data.map(d => d.label).filter((_, i) => i % stride === 0);
+
   g.append('g').attr('transform', `translate(0,${iH})`)
-    .call(d3.axisBottom(x).tickSize(0))
+    .call(d3.axisBottom(x).tickValues(tickValues).tickSize(0))
     .call(g => g.select('.domain').attr('stroke', '#e2e8f0'))
     .selectAll('text')
       .attr('transform', 'rotate(-38)')
@@ -148,15 +153,21 @@ export function renderLine(containerId, data) {
     .attr('fill', 'none').attr('stroke', COLORS[0]).attr('stroke-width', 2.5)
     .attr('d', line);
 
-  // X axis
+  // X axis — pas adaptiv: fiecare etichetă are nevoie de ~38px ca să nu se suprapună
+  const minSpacing = 38;
+  const stride = Math.max(1, Math.ceil((data.length * minSpacing) / iW));
+  const tickValues = data.map(d => d.label).filter((_, i) => i % stride === 0);
+
   g.append('g').attr('transform', `translate(0,${iH})`)
-    .call(d3.axisBottom(x).tickSize(0))
+    .call(d3.axisBottom(x).tickValues(tickValues).tickSize(0))
     .call(g => g.select('.domain').attr('stroke', '#e2e8f0'))
     .selectAll('text')
-      .attr('transform', 'rotate(-28)')
+      .attr('transform', 'rotate(-38)')
       .attr('text-anchor', 'end')
       .attr('font-size', 9)
-      .attr('fill', '#64748b');
+      .attr('fill', '#64748b')
+      .attr('dy', '0.4em')
+      .attr('dx', '-0.4em');
 
   // Y axis
   g.append('g')
@@ -204,18 +215,20 @@ export function renderPie(containerId, data, { title = '' } = {}) {
 
   const W = Math.max(container.clientWidth || 480, 320);
   const H = Math.max(container.clientHeight || 280, 240);
-  const R = Math.min(W * 0.45, H) / 2 - 16;
+  // Donut mai mare + inel interior mai lat ca să încapă titlul + procentul
+  const R = Math.min(W * 0.5, H * 0.95) / 2 - 8;
+  const innerRatio = 0.6;
 
   const svg = d3.select(container).append('svg')
     .attr('viewBox', `0 0 ${W} ${H}`)
     .attr('preserveAspectRatio', 'xMidYMid meet')
     .attr('width', '100%').attr('height', '100%')
     .attr('xmlns', 'http://www.w3.org/2000/svg');
-  const g = svg.append('g').attr('transform', `translate(${W * 0.38},${H / 2})`);
+  const g = svg.append('g').attr('transform', `translate(${W * 0.35},${H / 2})`);
 
   const pie   = d3.pie().value(d => +d.avg_value).sort(null);
-  const arc   = d3.arc().innerRadius(R * 0.52).outerRadius(R);
-  const arcHover = d3.arc().innerRadius(R * 0.52).outerRadius(R + 6);
+  const arc   = d3.arc().innerRadius(R * innerRatio).outerRadius(R);
+  const arcHover = d3.arc().innerRadius(R * innerRatio).outerRadius(R + 6);
 
   if (title) {
     g.append('text').attr('text-anchor', 'middle').attr('dy', '-0.15em').attr('font-size', 12).attr('font-weight', '700').attr('fill', '#1e293b').text(title);
